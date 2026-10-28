@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAlpha Store - Indian E-Commerce</title>
+    <style>
+        :root { --primary: #0f172a; --accent: #2563eb; --accent-hover: #1d4ed8; --buy-now: #ffa41c; --buy-now-hover: #fa8900; --bg: #f8fafc; --card-bg: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg); color: #1e293b; min-height: 100vh; }
+        
+        header { background: var(--primary); color: white; padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .logo { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.5px; }
+        .nav-actions button { background: var(--accent); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-left: 0.5rem; }
+        .nav-actions button:hover { background: var(--accent-hover); }
+
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+        .hero { margin-bottom: 2rem; }
+        
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-4px); }
+        .card img { width: 100%; height: 200px; object-fit: cover; cursor: pointer; }
+        .card-body { padding: 1.2rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-brand { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700; }
+        .card-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.4rem; cursor: pointer; }
+        .card-price { font-size: 1.25rem; font-weight: 700; color: #16a34a; margin-bottom: 0.5rem; }
+        .badge { background: #fef08a; color: #854d0e; font-size: 0.8rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 0.8rem; }
+        .card-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .btn { padding: 0.6rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; text-align: center; width: 100%; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-buy { background: var(--buy-now); color: #0f172a; }
+        .btn-buy:hover { background: var(--buy-now-hover); }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 100; }
+        .modal { background: white; border-radius: 12px; width: 90%; max-width: 580px; padding: 2rem; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 1.2rem; right: 1.2rem; font-size: 1.4rem; border: none; background: none; cursor: pointer; color: #64748b; }
+        
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .form-group input { width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; }
+        
+        /* Detailed Cart Item Card Styling */
+        .cart-item { display: flex; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; }
+        .cart-item-img { width: 75px; height: 75px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+        .cart-item-info { flex-grow: 1; }
+        .cart-item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .cart-item-brand { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; }
+        .cart-item-desc { font-size: 0.8rem; color: #475569; margin: 0.2rem 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .cart-item-price { font-size: 0.95rem; font-weight: 700; color: #16a34a; }
+        
+        .qty-controls { display: flex; gap: 0.4rem; align-items: center; }
+        .qty-btn { width: 28px; height: 28px; border: 1px solid #cbd5e1; background: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .payment-option { border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.8rem; margin-bottom: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.8rem; }
+        .payment-option input { width: auto; cursor: pointer; }
+        .payment-option.active { border-color: var(--accent); background: #eff6ff; }
+
+        .order-card { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        .order-header { display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: #475569; }
+        .status-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+        .status-paid { background: #dcfce7; color: #15803d; }
+        .status-pending { background: #fef9c3; color: #a16207; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">CodeAlpha Store</div>
+        <div class="nav-actions">
+            <span id="userGreeting" style="margin-right: 0.8rem; font-weight: 600;"></span>
+            <button id="ordersBtn" style="display: none;" onclick="openOrderHistory()">My Orders</button>
+            <button id="authBtn" onclick="openModal('authModal')">Login / Register</button>
+            <button onclick="openModal('cartModal')">Cart (<span id="cartBadge">0</span>)</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h2>Featured Electronics Store</h2>
+        </div>
+        <div id="productGrid" class="product-grid"></div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal('authModal')">&times;</button>
+            <h3 id="authTitle" style="margin-bottom: 1rem;">Login</h3>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group" id="nameGroup" style="display: none;">
+                    <label>Full Name</label>
+                    <input type="text" id="authName">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="authEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="authPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="authSubmitBtn" style="width: 100%; margin-top: 0.5rem;">Login</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem; cursor: pointer; color: var(--accent);" id="toggleAuthText" onclick="toggleAuthMode()">Don't have an account? Register</p>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
+            <img id="modalImg" src="" style="width: 100%; height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+            <div id="modalBrand" class="card-brand"></div>
+            <h3 id="modalTitle" style="margin: 0.2rem 0;"></h3>
+            <div id="modalPrice" class="card-price"></div>
+            <div id="modalQuality" class="badge"></div>
+            <p id="modalDesc" style="color: #475569; font-size: 0.95rem; margin: 0.8rem 0;"></p>
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.4rem;">Specifications:</h4>
+            <ul id="modalSpecs" style="margin-left: 1.2rem; color: #334155; font-size: 0.9rem; margin-bottom: 1.5rem;"></ul>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="modalAddBtn" class="btn btn-primary">Add to Cart</button>
+                <button id="modalBuyBtn" class="btn btn-buy">Buy Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal-overlay">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal('cartModal')">&times;</button>
+            <h3 style="margin-bottom: 1rem;">Your Shopping Cart</h3>
+            <div id="cartList" style="max-height: 350px; overflow-y: auto;"></div>
+            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; margin: 1.5rem 0 1rem 0;">
+                <span>Total:</span>
+                <span>₹<span id="cartTotal">0</span></span>
+            </div>
+            <button class="btn btn-buy" style="width: 100%;" onclick="openCheckoutModal()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal-overlay">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal('checkoutModal')">&times;</button>
+            <h3 style="margin-bottom: 1rem;">Checkout Details</h3>
+            
+            <div class="form-group">
+                <label>Shipping Address</label>
+                <input type="text" id="shippingAddress" placeholder="House No, Street, City, Pincode" required>
+            </div>
+
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.6rem;">Payment Method:</h4>
+            
+            <div class="payment-option active" id="payUpiOption" onclick="selectPayment('UPI')">
+                <input type="radio" name="paymentMethod" value="UPI" checked>
+                <div>
+                    <strong>UPI (GPay / PhonePe / Paytm)</strong>
+                    <div style="font-size: 0.8rem; color: #64748b;">Instant Payment (Status: Paid)</div>
+                </div>
+            </div>
+            <div class="form-group" id="upiIdGroup">
+                <input type="text" id="upiIdInput" placeholder="Enter UPI ID (e.g. mobile@upi)">
+            </div>
+
+            <div class="payment-option" id="payCodOption" onclick="selectPayment('COD')">
+                <input type="radio" name="paymentMethod" value="COD">
+                <div>
+                    <strong>Cash on Delivery (COD)</strong>
+                    <div style="font-size: 0.8rem; color: #64748b;">Pay Cash on Delivery (Status: Pending)</div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; margin: 1.2rem 0;">
+                <span>Total Amount:</span>
+                <span>₹<span id="checkoutTotal">0</span></span>
+            </div>
+
+            <button class="btn btn-buy" style="width: 100%; font-size: 1.05rem;" onclick="processOrderNow()">Order Now</button>
+        </div>
+    </div>
+
+    <!-- Order History Modal -->
+    <div id="ordersModal" class="modal-overlay">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal('ordersModal')">&times;</button>
+            <h3 style="margin-bottom: 1rem;">My Order History</h3>
+            <div id="ordersList" style="max-height: 350px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let token = localStorage.getItem('token');
+        let user = JSON.parse(localStorage.getItem('user'));
+        let isRegister = false;
+        let selectedPaymentMethod = 'UPI';
+
+        function updateUI() {
+            if (token && user) {
+                document.getElementById('userGreeting').innerText = `Welcome, ${user.name}`;
+                document.getElementById('ordersBtn').style.display = "inline-block";
+                document.getElementById('authBtn').innerText = "Logout";
+                document.getElementById('authBtn').onclick = logout;
+            } else {
+                document.getElementById('userGreeting').innerText = "";
+                document.getElementById('ordersBtn').style.display = "none";
+                document.getElementById('authBtn').innerText = "Login / Register";
+                document.getElementById('authBtn').onclick = () => openModal('authModal');
+            }
+            renderCart();
+        }
+
+        async function loadProducts() {
+            const res = await fetch('/api/products');
+            products = await res.json();
+            renderProductGrid();
+        }
+
+        function renderProductGrid() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = products.map(p => `
+                <div class="card">
+                    <img src="${p.image_url}" alt="${p.name}" onclick="showProductDetails(${p.id})">
+                    <div class="card-body">
+                        <div>
+                            <div class="card-brand">${p.brand}</div>
+                            <div class="card-title" onclick="showProductDetails(${p.id})">${p.name}</div>
+                            <div class="card-price">₹${p.price.toLocaleString('en-IN')}</div>
+                            <div class="badge">Rating: ${p.quality_rating}</div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" onclick="addToCart(${p.id})">Add to Cart</button>
+                            <button class="btn btn-buy" onclick="buyNow(${p.id})">Buy Now</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showProductDetails(id) {
+            const p = products.find(prod => prod.id === id);
+            document.getElementById('modalImg').src = p.image_url;
+            document.getElementById('modalBrand').innerText = p.brand;
+            document.getElementById('modalTitle').innerText = p.name;
+            document.getElementById('modalPrice').innerText = `₹${p.price.toLocaleString('en-IN')}`;
+            document.getElementById('modalQuality').innerText = `Quality Rating: ${p.quality_rating}`;
+            document.getElementById('modalDesc').innerText = p.description;
+
+            const specsList = document.getElementById('modalSpecs');
+            specsList.innerHTML = p.specs.map(spec => `<li>${spec}</li>`).join('');
+
+            document.getElementById('modalAddBtn').onclick = () => { addToCart(p.id); closeModal('detailsModal'); };
+            document.getElementById('modalBuyBtn').onclick = () => { buyNow(p.id); closeModal('detailsModal'); };
+            openModal('detailsModal');
+        }
+
+        function saveCart() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderCart();
+        }
+
+        function addToCart(id) {
+            const p = products.find(prod => prod.id === id);
+            const item = cart.find(i => i.id === id);
+            if (item) item.qty++;
+            else cart.push({ ...p, qty: 1 });
+            saveCart();
+        }
+
+        function buyNow(id) {
+            addToCart(id);
+            closeModal('detailsModal');
+            openCheckoutModal();
+        }
+
+        function renderCart() {
+            const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            document.getElementById('cartBadge').innerText = totalQty;
+            document.getElementById('cartTotal').innerText = totalPrice.toLocaleString('en-IN');
+
+            const list = document.getElementById('cartList');
+            if (cart.length === 0) {
+                list.innerHTML = `<p style="color: #64748b; text-align: center;">Your cart is empty.</p>`;
+                return;
+            }
+            list.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <img class="cart-item-img" src="${item.image_url}" alt="${item.name}">
+                    <div class="cart-item-info">
+                        <div class="cart-item-brand">${item.brand || 'ELECTRONICS'}</div>
+                        <div class="cart-item-title">${item.name}</div>
+                        <div class="cart-item-desc">${item.description || ''}</div>
+                        <div class="cart-item-price">₹${item.price.toLocaleString('en-IN')} x ${item.qty}</div>
+                    </div>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
+                        <span style="font-size: 0.9rem; font-weight: 600;">${item.qty}</span>
+                        <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateQty(id, change) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty += change;
+                if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+            }
+            saveCart();
+        }
+
+        function openCheckoutModal() {
+            if (!token) {
+                alert("Please login to complete order.");
+                closeModal('cartModal');
+                openModal('authModal');
+                return;
+            }
+            if (cart.length === 0) return alert("Cart is empty.");
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            document.getElementById('checkoutTotal').innerText = total.toLocaleString('en-IN');
+            closeModal('cartModal');
+            openModal('checkoutModal');
+        }
+
+        function selectPayment(method) {
+            selectedPaymentMethod = method;
+            document.getElementById('payUpiOption').classList.toggle('active', method === 'UPI');
+            document.getElementById('payCodOption').classList.toggle('active', method === 'COD');
+            document.querySelector(`input[value="${method}"]`).checked = true;
+            document.getElementById('upiIdGroup').style.display = method === 'UPI' ? 'block' : 'none';
+        }
+
+        async function processOrderNow() {
+            const address = document.getElementById('shippingAddress').value;
+            if (!address) return alert("Please enter shipping address.");
+
+            if (selectedPaymentMethod === 'UPI') {
+                const upiId = document.getElementById('upiIdInput').value;
+                if (!upiId) return alert("Please enter valid UPI ID.");
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ 
+                    items: cart, 
+                    total_price: total,
+                    payment_method: selectedPaymentMethod,
+                    shipping_address: address
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(`Order Placed Successfully!\nMode: ${selectedPaymentMethod}\nStatus: ${data.status}`);
+                cart = [];
+                saveCart();
+                closeModal('checkoutModal');
+            } else {
+                alert(data.error || "Order failed.");
+            }
+        }
+
+        async function openOrderHistory() {
+            if (!token) return;
+            const res = await fetch('/api/orders', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const orders = await res.json();
+            const list = document.getElementById('ordersList');
+
+            if (orders.length === 0) {
+                list.innerHTML = `<p style="color: #64748b; text-align: center;">No previous orders found.</p>`;
+            } else {
+                list.innerHTML = orders.map(o => {
+                    const isPaid = o.payment_method === 'UPI';
+                    return `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <span>Order #${o.id}</span>
+                                <span class="status-badge ${isPaid ? 'status-paid' : 'status-pending'}">
+                                    ${o.payment_status || (isPaid ? 'Paid' : 'Pending')}
+                                </span>
+                            </div>
+                            <ul style="margin-left: 1rem; margin-bottom: 0.5rem;">
+                                ${o.items.map(item => `<li style="font-size: 0.88rem;">${item.name} - (x${item.qty}) - ₹${(item.price * item.qty).toLocaleString('en-IN')}</li>`).join('')}
+                            </ul>
+                            <div style="font-size: 0.85rem; color: #475569;">Payment Method: <strong>${o.payment_method}</strong></div>
+                            <div style="font-weight:700; color:#16a34a; margin-top:0.3rem;">Total Paid: ₹${o.total_price.toLocaleString('en-IN')}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            openModal('ordersModal');
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function toggleAuthMode() {
+            isRegister = !isRegister;
+            document.getElementById('authTitle').innerText = isRegister ? "Create Account" : "Login";
+            document.getElementById('authSubmitBtn').innerText = isRegister ? "Register" : "Login";
+            document.getElementById('nameGroup').style.display = isRegister ? "block" : "none";
+            document.getElementById('toggleAuthText').innerText = isRegister ? "Already have an account? Login" : "Don't have an account? Register";
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const name = document.getElementById('authName').value;
+
+            const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
+            const payload = isRegister ? { name, email, password } : { email, password };
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                token = data.token;
+                user = data.user;
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+                updateUI();
+                closeModal('authModal');
+                alert(data.message);
+            } else {
+                alert(data.error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            token = null;
+            user = null;
+            updateUI();
+        }
+
+        updateUI();
+        loadProducts();
+    </script>
+</body>
+</html>
